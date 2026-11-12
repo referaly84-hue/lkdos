@@ -2260,74 +2260,7 @@ function normalizeTgChat(raw) {
   if (!s.startsWith("@")) s = "@" + s;
   return s;
 }
-const SECRETS_FILE = path3.resolve("secrets.json");
-function readSecretsFile() {
-  try {
-    if (fs3.existsSync(SECRETS_FILE)) {
-      return JSON.parse(fs3.readFileSync(SECRETS_FILE, "utf8"));
-    }
-  } catch (e) {
-    console.warn("[Secrets] Ошибка чтения secrets.json:", e.message);
-  }
-  return {};
-}
-function saveSecretsFile(updates) {
-  try {
-    const cur = readSecretsFile();
-    const merged = { ...cur, ...updates };
-    fs3.writeFileSync(SECRETS_FILE, JSON.stringify(merged, null, 2), "utf8");
-    return true;
-  } catch (e) {
-    console.error("[Secrets] Ошибка записи в secrets.json:", e.message);
-    return false;
-  }
-}
 var HARDCODED = {
-  get geminiKeys() {
-    const s = readSecretsFile();
-    return Array.isArray(s.geminiKeys) && s.geminiKeys.length ? s.geminiKeys : [
-      "AQ.Ab8RN6JJdEeoqdMnEijSNoE4yHktyDBdXBPKzrX_E3qzbIV5ZQ",
-      "AQ.Ab8RN6LpYXVQis6VAoxPlBlbcuLx7eeUkTBwE-QjsiCIG3pe1w",
-      "AQ.Ab8RN6Jtr3n-uzTQ_N6fOueUoIhiTTg2bjAIUfuMG_YMyUFVBA",
-      "AQ.Ab8RN6IaX9uWN5vSPF2WDqWrAovBie6hKtc8JPrcMndd8a9CMg",
-      "AQ.Ab8RN6JFculmvVChDuZRnfgtakZ-_7svh9kJjGEn9Jcvth1S6A",
-      "AQ.Ab8RN6IsBz5qTHl8ynij12vF1eadQ3T_G57QJMlvgEkLBKLcuA"
-    ];
-  },
-  get geminiModel() {
-    const s = readSecretsFile();
-    return s.geminiModel || "gemini-3.5-flash-lite";
-  },
-  get groqKey() {
-    const s = readSecretsFile();
-    return s.groqKey || "";
-  },
-  get groqModel() {
-    const s = readSecretsFile();
-    return s.groqModel || "openai/gpt-oss-120b";
-  },
-  get openrouterKey() {
-    const s = readSecretsFile();
-    return s.openrouterKey || "";
-  },
-  get openrouterModel() {
-    const s = readSecretsFile();
-    return s.openrouterModel || "openrouter/free";
-  },
-  get tgToken() {
-    const s = readSecretsFile();
-    return s.tgToken || "9287223246:AAGbnn9P7bNs7tpU498FxswCFZ-0QcUu3BQ";
-  },
-  get tgChat() {
-    const s = readSecretsFile();
-    return s.tgChat || "https://t.me/matchsmotr";
-  },
-  get adminCode() {
-    const s = readSecretsFile();
-    return s.adminCode || "";
-  }
-};
-var HARDCODED_LEGACY = {
   geminiKeys: ["AQ.Ab8RN6JJdEeoqdMnEijSNoE4yHktyDBdXBPKzrX_E3qzbIV5ZQ", "AQ.Ab8RN6LpYXVQis6VAoxPlBlbcuLx7eeUkTBwE-QjsiCIG3pe1w", "AQ.Ab8RN6Jtr3n-uzTQ_N6fOueUoIhiTTg2bjAIUfuMG_YMyUFVBA", "AQ.Ab8RN6IaX9uWN5vSPF2WDqWrAovBie6hKtc8JPrcMndd8a9CMg", "AQ.Ab8RN6JFculmvVChDuZRnfgtakZ-_7svh9kJjGEn9Jcvth1S6A", "AQ.Ab8RN6IsBz5qTHl8ynij12vF1eadQ3T_G57QJMlvgEkLBKLcuA"],
   // до 10 ключей из РАЗНЫХ проектов Google, например ['AIza...', 'AIza...']
   geminiModel: "gemini-3.5-flash-lite",
@@ -2343,7 +2276,7 @@ var tgToken = () => String(process.env.TELEGRAM_BOT_TOKEN || process.env.TG_TOKE
 var tgChat = () => normalizeTgChat(process.env.TELEGRAM_CHAT_ID || process.env.TG_CHAT || db?.settings?.tgChat || HARDCODED.tgChat || "");
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path3.dirname(__filename);
-var PORT = Number(process.env.PORT) || 3000;
+var PORT = 3e3;
 var DATA_DIR = process.env.DATA_DIR || path3.join(__dirname, "data");
 var MDIR = path3.join(DATA_DIR, "matches");
 fs3.mkdirSync(MDIR, { recursive: true });
@@ -3608,7 +3541,7 @@ var player = (id) => db.players.find((p) => p.id === id);
 var fx = (id) => db.fixtures.find((f) => f.id === id);
 var compOf = (id) => db.comps.find((c) => c.id === id);
 var seasonFx = () => db.fixtures.filter((f) => f.season === S());
-var GROUP = { \u0412\u0420: "gk", \u0426\u0417: "def", \u041B\u0417: "def", \u041F\u0417: "def", \u0417\u0410\u0429: "def", \u041E\u041F: "mid", \u0426\u041F: "mid", \u0410\u041F: "mid", \u041B\u041F: "mid", \u041F\u041F: "mid", \u041B\u0412: "fwd", \u041F\u0412: "fwd", \u0426\u0424: "fwd", \u041D\u0410\u041F: "fwd" };
+var GROUP = { \u0412\u0420: "gk", \u0426\u0417: "def", \u041B\u0417: "def", \u041F\u0417: "def", \u041E\u041F: "mid", \u0426\u041F: "mid", \u0410\u041F: "mid", \u041B\u0412: "fwd", \u041F\u0412: "fwd", \u0426\u0424: "fwd" };
 var POSES = Object.keys(GROUP);
 function squadOf(tid) {
   const ids = db.squads[tid];
@@ -4605,24 +4538,6 @@ function llog(e) {
   db.llmlog.push({ ts: Date.now(), ...e });
   if (db.llmlog.length > 200) db.llmlog.shift();
 }
-function recordAiHistory(entry) {
-  if (!db.aiHistory || !Array.isArray(db.aiHistory)) db.aiHistory = [];
-  db.aiHistory.unshift({
-    id: uid(),
-    ts: Date.now(),
-    iso: new Date().toISOString(),
-    task: entry.task || 'Запрос',
-    provider: entry.provider || 'gemini',
-    model: entry.model || '',
-    userPrompt: String(entry.user || ''),
-    systemPrompt: String(entry.sys || ''),
-    response: String(entry.response || ''),
-    ok: !!entry.ok,
-    ms: entry.ms || 0,
-    err: entry.err ? String(entry.err) : null
-  });
-  if (db.aiHistory.length > 500) db.aiHistory.length = 500;
-}
 var keyCooldown = /* @__PURE__ */ new Map();
 var coolKey = (p, e) => {
   const ms = e.daily ? 60 * 6e4 : e.status === 429 ? 9e4 : 60 * 6e4;
@@ -4646,12 +4561,10 @@ async function llm(sys, user, { json = true, task = "", temp = 0.9, max = 16e3, 
         const text = await callProv(p, sys, user, { json, temp, max, grounded });
         if (!text.trim()) throw new Error("\u043F\u0443\u0441\u0442\u043E\u0439 \u043E\u0442\u0432\u0435\u0442");
         llog({ task, p: p.id || p.n, ok: 1, ms: Date.now() - t0 });
-        recordAiHistory({ task, provider: p.n, model: p.model, user, sys, ok: 1, ms: Date.now() - t0, response: text });
         return text;
       } catch (e) {
         last = e;
         llog({ task, p: p.id || p.n, ok: 0, ms: Date.now() - t0, err: e.message.slice(0, 160) });
-        recordAiHistory({ task, provider: p.n, model: p.model, user, sys, ok: 0, ms: Date.now() - t0, err: e.message });
         if (e.status === 429 || e.status === 401 || e.status === 403) coolKey(p, e);
         if (e.status === 429) {
           cx.calls--;
@@ -7588,8 +7501,6 @@ var pubPlayer = (p) => ({
   banUntil: p.banUntil || null,
   banText: banText(p),
   outText: outText(p),
-  banReason: p.banReason || "",
-  banLabel: p.banLabel || "",
   yellowCycle: (p.seasonYC || 0) % 4,
   loanFrom: p.loanFrom || null,
   loanTerm: p.loanTerm || null,
@@ -8403,139 +8314,8 @@ app.post("/api/admin/draw/stop", admin, (req, res) => {
     } catch (err) {
     }
   }
-  // Сохраняем ключи и секреты в secrets.json
-  const secUpdates = {};
-  if (typeof b.tgToken === "string" && !b.tgToken.includes("•")) {
-    secUpdates.tgToken = b.tgToken.trim();
-  }
-  if (typeof b.tgChat === "string") {
-    secUpdates.tgChat = normalizeTgChat(b.tgChat);
-  }
-  if (typeof b.keys?.gemini === "string") {
-    secUpdates.geminiKeys = b.keys.gemini.split(/[\n,;]+/).map(x => x.trim()).filter(Boolean);
-  }
-  if (typeof b.keys?.groq === "string") secUpdates.groqKey = b.keys.groq.trim();
-  if (typeof b.keys?.openrouter === "string") secUpdates.openrouterKey = b.keys.openrouter.trim();
-  if (typeof b.models?.gemini === "string") secUpdates.geminiModel = b.models.gemini.trim();
-  if (typeof b.models?.groq === "string") secUpdates.groqModel = b.models.groq.trim();
-  if (typeof b.models?.openrouter === "string") secUpdates.openrouterModel = b.models.openrouter.trim();
-  if (Object.keys(secUpdates).length > 0) {
-    saveSecretsFile(secUpdates);
-  }
   save();
-  res.json({ ok: 1, secretsFile: "secrets.json" });
-});
-
-// Роуты для Истории ИИ:
-app.get("/api/admin/ai-history", admin, (req, res) => {
-  const history = db.aiHistory || [];
-  const q = norm(req.query.q || "");
-  const task = String(req.query.task || "").trim();
-  const status = String(req.query.status || "").trim();
-  const provider = String(req.query.provider || "").trim();
-
-  let filtered = history;
-  if (q) {
-    filtered = filtered.filter(item =>
-      norm(item.userPrompt).includes(q) ||
-      norm(item.systemPrompt).includes(q) ||
-      norm(item.response).includes(q) ||
-      norm(item.task).includes(q) ||
-      (item.err && norm(item.err).includes(q))
-    );
-  }
-  if (task) {
-    filtered = filtered.filter(item => item.task === task);
-  }
-  if (status === "ok") {
-    filtered = filtered.filter(item => item.ok);
-  } else if (status === "error") {
-    filtered = filtered.filter(item => !item.ok);
-  }
-  if (provider) {
-    filtered = filtered.filter(item => item.provider === provider);
-  }
-
-  const total = history.length;
-  const okCount = history.filter(i => i.ok).length;
-  const errCount = history.filter(i => !i.ok).length;
-  const avgMs = history.length ? Math.round(history.reduce((acc, i) => acc + (i.ms || 0), 0) / history.length) : 0;
-
-  const limit = Math.min(200, Math.max(10, parseInt(req.query.limit, 10) || 100));
-  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
-
-  res.json({
-    ok: 1,
-    total,
-    filteredTotal: filtered.length,
-    stats: { total, ok: okCount, errors: errCount, avgMs },
-    items: filtered.slice(offset, offset + limit),
-    tasks: [...new Set(history.map(i => i.task).filter(Boolean))]
-  });
-});
-
-app.post("/api/admin/ai-history/clear", admin, (req, res) => {
-  db.aiHistory = [];
-  save();
-  res.json({ ok: 1, message: "История запросов к ИИ очищена" });
-});
-
-// Роут для прямого управления дисциплиной игрока:
-app.post("/api/admin/player/discipline", admin, (req, res) => {
-  const b = req.body;
-  const p = b.id && player(b.id);
-  if (!p) return fail(res, "Игрок не найден");
-
-  if (b.clearBan) {
-    p.banLeft = 0;
-    p.banUntil = null;
-    p.banLabel = "";
-    p.banReason = "";
-  } else {
-    if (b.banLeft !== undefined) p.banLeft = Math.max(0, parseInt(b.banLeft, 10) || 0);
-    if (b.banUntil !== undefined) p.banUntil = b.banUntil ? String(b.banUntil).trim() : null;
-    if (b.banLabel !== undefined) p.banLabel = String(b.banLabel || "").trim();
-    if (b.banReason !== undefined) p.banReason = String(b.banReason || "").trim();
-  }
-
-  if (b.clearInjury || b.injuryActive === false) {
-    p.out = null;
-  } else if ("out" in b) {
-    if (!b.out) {
-      p.out = null;
-    } else if (typeof b.out === "object" && b.out.until) {
-      const dCount = b.out.days ? Math.max(1, Math.round(+b.out.days)) : 1;
-      p.out = {
-        until: String(b.out.until).trim(),
-        days: dCount,
-        label: b.out.label ? String(b.out.label).trim() : daysLabel(dCount),
-        reason: b.out.reason ? String(b.out.reason).trim() : (b.out.label ? String(b.out.label).trim() : "Травма")
-      };
-    }
-  }
-
-  p.updatedAt = new Date().toISOString();
-  save();
-  res.json({ ok: 1, player: pubPlayer(p) });
-});
-
-// Роут информации о секретах:
-app.get("/api/admin/secrets", admin, (req, res) => {
-  const sec = readSecretsFile();
-  res.json({
-    ok: 1,
-    file: "secrets.json",
-    exists: fs3.existsSync(SECRETS_FILE),
-    geminiCount: Array.isArray(sec.geminiKeys) ? sec.geminiKeys.length : (sec.geminiKeys ? 1 : 0),
-    geminiModel: sec.geminiModel || HARDCODED.geminiModel,
-    hasGroq: !!sec.groqKey,
-    groqModel: sec.groqModel || "openai/gpt-oss-120b",
-    hasOpenrouter: !!sec.openrouterKey,
-    openrouterModel: sec.openrouterModel || "openrouter/free",
-    hasTgToken: !!sec.tgToken,
-    tgChat: sec.tgChat || "",
-    hasAdminCode: !!sec.adminCode
-  });
+  res.json({ ok: 1 });
 });
 app.post("/api/admin/draw/clear-groups", admin, (req, res) => {
   const tournament = String(req.body?.tournament || "all").toLowerCase();
@@ -9633,7 +9413,7 @@ app.post("/api/club/squad/add", needClub, async (req, res) => {
       save();
       return res.json({ ok: 1 });
     }
-    const maxLimit = Math.min(28, db.settings.squadMax || 28); if (cur.length >= maxLimit) return fail(res, `В заявке максимум ${maxLimit} игроков`);
+    if (cur.length >= db.settings.squadMax) return fail(res, `\u0412 \u0437\u0430\u044F\u0432\u043A\u0435 \u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C ${db.settings.squadMax} \u0438\u0433\u0440\u043E\u043A\u043E\u0432`);
     const tm = team(req.tid);
     if (tm && tm.comp === "rpl") {
       const limit = getRplLegionLimit(S());
@@ -9769,7 +9549,7 @@ app.post("/api/club/squad/add-batch", needClub, async (req, res) => {
     }
     const cur = squadOf(req.tid);
     let curSquadIds = [...cur.map((x) => x.id)];
-    const squadMax = Math.min(28, db.settings.squadMax || 28);
+    const squadMax = db.settings.squadMax || 35;
     const added = [];
     const pendingTransfers = [];
     const alreadyInSquad = [];
@@ -10321,7 +10101,7 @@ app.post("/api/admin/settings", admin, (req, res) => {
     tgCooldownUntil = 0;
     tgLastStatus = { ok: true };
   }
-  for (const k of ["secPerMin", "breakSec", "maxAiCalls", "aiParallel"]) if (b[k] !== void 0 && +b[k] > 0) s[k] = +b[k]; if (b.squadMax !== void 0) s.squadMax = Math.min(28, Math.max(1, +b.squadMax || 28));
+  for (const k of ["secPerMin", "breakSec", "squadMax", "maxAiCalls", "aiParallel"]) if (b[k] !== void 0 && +b[k] > 0) s[k] = +b[k];
   if (b.aiLeadSec !== void 0 && +b.aiLeadSec >= 0) s.aiLeadSec = Math.min(900, +b.aiLeadSec);
   if (b.chunks !== void 0) s.chunks = +b.chunks === 6 ? 6 : 2;
   if (b.auto !== void 0) s.auto = !!b.auto;
@@ -10596,35 +10376,11 @@ app.post("/api/admin/player", admin, (req, res) => {
       db.squads[p.teamId] = [.../* @__PURE__ */ new Set([...squadOf(p.teamId).map((x) => x.id), p.id])];
     }
   }
-  // Дисквалификация:
-  if (b.clearBan) {
-    p.banLeft = 0;
-    p.banUntil = null;
-    p.banLabel = "";
-    p.banReason = "";
-  } else {
-    if (b.banLeft !== void 0) p.banLeft = Math.max(0, parseInt(b.banLeft, 10) || 0);
-    if (b.banUntil !== void 0) p.banUntil = b.banUntil ? String(b.banUntil).trim() : null;
-    if (b.banLabel !== void 0) p.banLabel = String(b.banLabel || "").trim();
-    if (b.banReason !== void 0) p.banReason = String(b.banReason || "").trim();
-  }
-
-  // Травма:
-  if (b.clearInjury || b.injuryActive === false) {
-    p.out = null;
-  } else if ("out" in b) {
-    if (!b.out) {
-      p.out = null;
-    } else if (typeof b.out === "object" && b.out.until) {
-      const dCount = b.out.days ? Math.max(1, Math.round(+b.out.days)) : 1;
-      p.out = {
-        until: String(b.out.until).trim(),
-        days: dCount,
-        label: b.out.label ? String(b.out.label).trim() : daysLabel(dCount),
-        reason: b.out.reason ? String(b.out.reason).trim() : (b.out.label ? String(b.out.label).trim() : "Травма")
-      };
-    }
-  }
+  if ("out" in b) p.out = b.out && b.out.until ? b.out : null;
+  if (b.banLeft !== void 0) p.banLeft = +b.banLeft || 0;
+  if (b.banUntil !== void 0) p.banUntil = b.banUntil || null;
+  if (b.banLabel !== void 0) p.banLabel = String(b.banLabel || "");
+  if (b.banReason !== void 0) p.banReason = String(b.banReason || "");
   p.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   save();
   res.json({ ok: 1, player: p });

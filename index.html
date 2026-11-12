@@ -3217,17 +3217,30 @@ function paintMatch() {
     if (!L) { b.innerHTML = '<div class="empty panel">Составы откроются перед началом матча.</div>'; return; }
     b.innerHTML = '<div class="grid g2">' + ['home', 'away'].map(s => {
       const sideLineup = L[s] || { starters: [], bench: [], name: s === 'home' ? f.homeName : f.awayName, formation: '4-3-3' };
-      const logo = sideLineup.logo || (s === 'home' ? f.homeLogo : f.awayLogo);
-      const coachInfo = M.coaches?.[s]?.coach;
-      const tid = s === 'home' ? f.home : f.away;
-      const canSeeTactics = sideLineup.speech != null && (S.me?.role === 'admin' || (S.me?.teamId && S.me.teamId === tid));
+      const coachData = M.coaches?.[s];
+      const coachInfo = coachData?.coach;
+      const synergy = coachData?.synergy;
+      const chem = M.chemistry?.[s];
+      const synScore = synergy ? Math.round(synergy.score || +synergy || 70) : null;
+      const chemScore = chem ? Math.round(chem.score || 70) : null;
 
       return `<div class="panel">
         <div class="row" style="margin-bottom:12px">
           ${logo ? `<img class="t-logo md" src="${logo}" alt=""/>` : ''}
           <h3 style="margin:0">${e(sideLineup.name)} · ${e(sideLineup.formation)}</h3>
         </div>
-        ${coachInfo ? `<div class="small muted" style="margin-bottom:10px"><b>Главный тренер:</b> ${e(coachInfo.name)}${S.me?.role === 'admin' ? ` (стиль: ${e(coachInfo.styleTitle)})` : ` (${e(coachInfo.nationality)})`}</div>` : ''}
+        ${coachInfo ? `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+            <div><b>👔 Тренер:</b> ${e(coachInfo.name)} <span class="muted small">(${e(coachInfo.styleTitle || coachInfo.style || 'Тренер')})</span></div>
+            ${synScore !== null ? `<span class="tag" style="background:#ecfdf5;color:#065f46;border-color:#a7f3d0;font-weight:700">Синергия: ${synScore}%</span>` : ''}
+          </div>
+          ${chem ? `
+          <div style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+            <div><b>🤝 Сыгранность:</b> <span style="font-weight:700;color:${chemScore >= 75 ? '#10b981' : chemScore >= 55 ? '#f59e0b' : '#ef4444'}">${chemScore}% (${e(chem.grade || 'Хорошая')})</span></div>
+            <span class="muted small">${e(chem.description || '')}</span>
+          </div>` : ''}
+        </div>` : ''}
         <h4 style="margin:0 0 6px">Стартовый состав (11)</h4>
         ${sideLineup.starters?.length ? sideLineup.starters.map(p => `<div><span class="tag" style="min-width:32px;display:inline-block;text-align:center">${e(p.pos || 'ИГР')}</span> ${e(p.name)}${p.loan ? ` <span class="muted small">(из «${e(p.loan)}»)</span>` : ''}</div>`).join('') : '<div class="muted small">Стартовый состав уточняется ближе к игре.</div>'}
         <h4 style="margin-top:14px;margin-bottom:6px">Запасные</h4>
@@ -3238,6 +3251,10 @@ function paintMatch() {
           <span class="tag" style="font-size:10.5px;background:#e8f0fe;color:#1a73e8;border-color:#aecbfa">только для клуба</span>
         </h4>
         <div class="qa">${e(sideLineup.speech || '(установка не заполнена)')}</div>
+        ${synergy?.styleFit ? `
+        <div style="margin-top:6px;padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.4;background:${synergy.styleFit === 'conflict' ? 'rgba(239,68,68,0.12)' : synergy.styleFit === 'perfect' ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)'};border:1px solid ${synergy.styleFit === 'conflict' ? '#f87171' : synergy.styleFit === 'perfect' ? '#34d399' : '#60a5fa'}">
+          <b>${e(synergy.styleFitLabel || '')}:</b> ${e(synergy.inGameEffect || synergy.description || '')}
+        </div>` : ''}
         ${sideLineup.training ? `
         <h4 style="margin-top:14px;margin-bottom:6px">Тренировочный план</h4>
         <div class="qa">${e(sideLineup.training)}</div>` : ''}
@@ -5996,6 +6013,9 @@ function lineupForm(box, f, c, withT, app) {
   ${loanBlock}
   <label>Тактика — всё, что тренер говорит игрокам перед матчем</label><textarea class="sp1" placeholder="Пишите как есть: установка, настрой, речь. Молчание — тоже речь.">${e(L.speech || '')}</textarea>
   <label>Тренировочный план перед матчем (произвольный текст)</label><textarea class="tr1" placeholder="Например: пн — отдых, вт — прессинг 2 часа, ср — стандарты, чт — разминка, пт — отдых">${e(L.training || '')}</textarea>
+  <div id="tactical_preview_widget" style="margin:14px 0;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:10px;font-size:12.5px;line-height:1.45">
+    <div class="muted small">⏳ Анализ тактической совместимости и сыгранности…</div>
+  </div>
   <div class="row" style="margin-top:14px"><button class="btn save">Сохранить</button><span class="muted small">Состав можно менять до начала матча.</span></div>`;
 
   const cnt = () => {
@@ -6028,6 +6048,68 @@ function lineupForm(box, f, c, withT, app) {
   };
   cnt();
   box.addEventListener('change', cnt);
+
+  const liveBox = box.querySelector('#tactical_preview_widget');
+  let prevTimer = null;
+  const updateLiveTactics = async () => {
+    if (!liveBox) return;
+    const sel = [...box.querySelectorAll('select')];
+    const starters = sel.filter(s => s.value === 's').map(s => s.dataset.p);
+    const speech = box.querySelector('.sp1')?.value || '';
+    const training = box.querySelector('.tr1')?.value || '';
+    const formation = box.querySelector('.fm')?.value || '4-3-3';
+
+    try {
+      const res = await api('/club/tactics/preview', withT({ starters, speech, training, formation }));
+      if (!res || !res.ok) return;
+      const syn = res.synergy || {};
+      const chem = res.chemistry || {};
+      const coach = res.coach || c.team?.coach;
+      const score = Math.round(syn.score || +syn || 70);
+      const chemScore = Math.round(chem.score || 70);
+
+      const fitBg = syn.styleFit === 'conflict' ? 'rgba(239,68,68,0.12)' : syn.styleFit === 'perfect' ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)';
+      const fitColor = syn.styleFit === 'conflict' ? '#ef4444' : syn.styleFit === 'perfect' ? '#10b981' : '#3b82f6';
+      const fitBorder = syn.styleFit === 'conflict' ? '#f87171' : syn.styleFit === 'perfect' ? '#34d399' : '#60a5fa';
+
+      liveBox.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px">
+            <span>👔 Тренерский штаб и тактический стиль</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="tag" style="background:#ecfdf5;color:#065f46;border-color:#a7f3d0;font-weight:700">Синергия: ${score}%</span>
+            <span class="tag" style="background:#eff6ff;color:#1e40af;border-color:#bfdbfe;font-weight:700">Штаб: ${syn.staffQuality || 70}/100</span>
+          </div>
+        </div>
+        ${coach ? `<div class="muted small" style="margin-bottom:6px"><b>Главный тренер:</b> ${e(coach.name)} (профиль: ${e(coach.styleTitle || coach.style || 'сбалансированный')}, схема: ${e(coach.favoriteFormation || '4-3-3')})</div>` : ''}
+        <div style="padding:8px 10px;border-radius:6px;background:${fitBg};border:1px solid ${fitBorder};color:${fitColor};font-weight:600;margin-bottom:8px">
+          ${syn.styleFit === 'conflict' ? '⚠️ ' : syn.styleFit === 'perfect' ? '✅ ' : 'ℹ️ '} ${e(syn.styleFitLabel || '')}: ${e(syn.inGameEffect || syn.description || '')}
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+            <div><b>🤝 Сыгранность стартовых 11:</b> <span style="font-weight:700;color:${chemScore >= 75 ? '#10b981' : chemScore >= 55 ? '#f59e0b' : '#ef4444'}">${chemScore}% (${e(chem.grade || 'Удовлетворительная')})</span></div>
+            <span class="tag" style="font-size:11px">${starters.length === 11 ? 'Полный состав 11' : starters.length + '/11 игроков'}</span>
+          </div>
+          <div class="muted small">${e(chem.description || '')}</div>
+          ${chem.partnerships && chem.partnerships.length ? `
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+            ${chem.partnerships.map(pt => `<span class="tag" style="font-size:11px;background:rgba(255,255,255,0.06)">${e(pt)}</span>`).join('')}
+          </div>` : ''}
+        </div>
+      `;
+    } catch (_) {}
+  };
+
+  const schedulePreview = () => {
+    clearTimeout(prevTimer);
+    prevTimer = setTimeout(updateLiveTactics, 300);
+  };
+  schedulePreview();
+  box.querySelector('.sp1')?.addEventListener('input', schedulePreview);
+  box.querySelector('.tr1')?.addEventListener('input', schedulePreview);
+  box.querySelector('.fm')?.addEventListener('input', schedulePreview);
+  box.addEventListener('change', schedulePreview);
 
   box.querySelector('.save').onclick = async () => {
     const sel = [...box.querySelectorAll('select')];
@@ -8932,7 +9014,7 @@ async function pgAdmin(app) {
     </div>
     <div class="panel"><h3>Код администратора</h3><div class="code">${e(s.adminCode)}</div><p class="muted small">Его можно переопределить переменной окружения ADMIN_CODE.</p></div>
     <div class="panel"><h3>Нейросеть</h3><p class="muted small">Порядок: Gemini → Groq → OpenRouter. Если у одного закончился лимит, запрос уходит к следующему. Ключи можно задать здесь или переменными окружения.</p>
-    ${[['gemini', 'Google Gemini (AI Studio)', 'gemini-3.8-flash'], ['groq', 'Groq', 'openai/gpt-oss-120b'], ['openrouter', 'OpenRouter', 'openrouter/free']].map(([n, t, d]) => `<div class="row" style="margin-top:8px"><div style="flex:1;min-width:230px">${n === 'gemini' ? `<label>${t} ${k.geminiCount ? '<span class="tag">ключей: ' + k.geminiCount + (k.geminiCooling ? ' (на паузе: ' + k.geminiCooling + ')' : '') + '</span>' : ''}</label><textarea id="k_gemini" rows="5" style="font:13px/1.4 ui-monospace,Consolas,monospace" autocomplete="off" placeholder="${k.geminiCount ? 'Сейчас: ' + (k.geminiTails || []).join(', ') + '. Чтобы заменить весь список — вставьте ключи, по одному в строке (до 10). Пусто — не менять.' : 'Вставьте ключи Gemini, по одному в строке (до 10)'}"></textarea>` : `<label>${t} ${k[n] ? '<span class="tag">ключ есть</span>' : ''}</label><input id="k_${n}" type="password" placeholder="${k[n] ? 'оставьте пустым, чтобы не менять' : 'вставьте ключ'}" autocomplete="off">`}</div><div style="flex:1;min-width:200px"><label>Модель</label><input id="m_${n}" value="${e(mo[n] || '')}" placeholder="${d}"></div></div>`).join('')}
+    ${[['gemini', 'Google Gemini (AI Studio)', 'gemini-3.8-flash'], ['groq', 'Groq', 'openai/gpt-oss-120b'], ['openrouter', 'OpenRouter', 'openrouter/free']].map(([n, t, d]) => `<div class="row" style="margin-top:8px"><div style="flex:1;min-width:230px">${n === 'gemini' ? `<label>${t} ${k.geminiCount ? '<span class="tag">активных ключей: ' + k.geminiCount + (k.geminiCooling ? ' (на паузе: ' + k.geminiCooling + ')' : '') + '</span>' : ''}</label><textarea id="k_gemini" rows="5" style="font:13px/1.4 ui-monospace,Consolas,monospace" autocomplete="off" placeholder="${k.geminiCount ? 'Сейчас: ' + (k.geminiTails || []).join(', ') + '. Вставьте любые ключи (по одному в строке, без ограничений — хоть 50 штук). Пусто — не менять.' : 'Вставьте ключи Gemini, по одному в строке (неограниченно: 10, 20, 50+ штук). Будет работать балансировка Round-Robin и мгновенный failover.'}"></textarea><div class="muted small" style="margin-top:3px">✨ Поддерживается любое количество ключей Gemini (до 50+). Запросы равномерно распределяются по кругу (Round-Robin), при ошибке 429 ключ ставится на паузу и мгновенно подхватывается следующий.</div>` : `<label>${t} ${k[n] ? '<span class="tag">ключ есть</span>' : ''}</label><input id="k_${n}" type="password" placeholder="${k[n] ? 'оставьте пустым, чтобы не менять' : 'вставьте ключ'}" autocomplete="off">`}</div><div style="flex:1;min-width:200px"><label>Модель</label><input id="m_${n}" value="${e(mo[n] || '')}" placeholder="${d}"></div></div>`).join('')}
     <label style="margin-top:10px"><input type="checkbox" id="gr" ${s.grounding ? 'checked' : ''} style="width:auto"> Поиск Google при создании карточек (только Gemini)</label></div>
     <div class="panel"><h3>Трансляция и Telegram</h3><div class="row"><div style="flex:1;min-width:200px"><label>Секунд реального времени на минуту матча</label><input id="spm" type="number" step="0.5" value="${s.secPerMin}"></div><div style="flex:1;min-width:200px"><label>Пауза на перерыве, сек</label><input id="brk" type="number" value="${s.breakSec}"></div></div>
     <div class="row"><div style="flex:1;min-width:220px"><label>Токен Telegram-бота</label><input id="tgt" type="password" value="${e(s.tgToken)}" placeholder="123456:ABC…"></div><div style="flex:1;min-width:200px"><label>ID канала или чата</label><input id="tgc" value="${e(s.tgChat)}" placeholder="@matchsmotr"></div></div>
